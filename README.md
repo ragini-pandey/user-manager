@@ -1,73 +1,144 @@
-# React + TypeScript + Vite
+# User Manager
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A React + TypeScript application for managing users with a schema-driven form system built with Material-UI.
 
-Currently, two official plugins are available:
+## Setup Instructions
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### Prerequisites
 
-## React Compiler
+- Node.js (v18 or higher)
+- npm
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Installation
 
-## Expanding the ESLint configuration
+```bash
+# Install dependencies
+npm install
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      
-
-      
-      tseslint.configs.recommendedTypeChecked,
-      
-      tseslint.configs.strictTypeChecked,
-      
-      tseslint.configs.stylisticTypeChecked,
-
-      
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      
-    },
-  },
-])
+# Start the development server (runs both API and frontend)
+npm run start
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+This will start:
+- **JSON Server** (mock API) at http://localhost:3001
+- **Vite dev server** at http://localhost:5173 (or next available port)
 
-```js
+### Available Scripts
 
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+| Command | Description |
+|---------|-------------|
+| `npm run start` | Start both API server and frontend |
+| `npm run dev` | Start only the Vite dev server |
+| `npm run server` | Start only the JSON Server API |
+| `npm run build` | Build for production |
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      
-      
-      reactX.configs['recommended-typescript'],
-      
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
+## Adding New Fields to the Form
 
-    },
+The form is **schema-driven** — all fields are defined in a single configuration file. To add a new field:
+
+### 1. Edit `src/config/formConfig.ts`
+
+Add a new entry to the `userFieldsConfig` array:
+
+```typescript
+{
+  name: 'dateOfBirth',        // Unique key (matches User property)
+  label: 'Date of Birth',     // Display label
+  type: 'date',               // Input type: 'text' | 'email' | 'tel' | 'date' | 'number' | 'textarea' | 'select'
+  placeholder: '',            // Placeholder text
+  validation: {
+    required: true,           // Is field required?
+    minLength: 2,             // Minimum character length
+    maxLength: 50,            // Maximum character length
+    pattern: /^regex$/,       // Regex pattern for validation
   },
-])
+  errorMessages: {            // Custom error messages (optional)
+    required: 'Date of birth is required',
+    pattern: 'Invalid date format',
+  },
+  gridSize: 6,                // Grid column span (1-12, MUI grid)
+}
+```
+
+### 2. Update the User type (optional)
+
+If you want type safety, add the field to `src/types/user.ts`:
+
+```typescript
+export interface User {
+  id: number;
+  firstName: string;
+  lastName: string;
+  // ... existing fields
+  dateOfBirth: string;        // Add new field
+  [key: string]: unknown;
+}
+```
+
+### 3. Update mock data (optional)
+
+Add the field to existing records in `db.json`:
+
+```json
+{
+  "users": [
+    {
+      "id": 1,
+      "firstName": "Alice",
+      "dateOfBirth": "1990-01-15"
+    }
+  ]
+}
+```
+
+**That's it!** The form, table, and validation automatically update based on the config.
+
+## Design Decisions & Assumptions
+
+### Architecture
+
+- **Schema-driven forms**: All form fields are defined in `formConfig.ts`. This allows adding/removing fields without touching component code.
+- **Single source of truth**: The `FieldConfig` type defines validation rules, error messages, and UI properties in one place.
+- **Separation of concerns**: API logic (`userApi.ts`), state management (`useUsers.ts`), and UI components are cleanly separated.
+
+### Technical Choices
+
+- **Material-UI (MUI)**: Chosen for consistent, accessible UI components out of the box.
+- **JSON Server**: Used as a mock REST API for rapid prototyping. In production, replace with a real backend.
+- **Vite**: Fast build tool with HMR for better developer experience.
+- **TypeScript**: Full type safety across the application.
+
+### Assumptions
+
+- User IDs are auto-generated by JSON Server (numeric, auto-incrementing).
+- All form fields are strings (for simplicity). Extend `FieldConfig` for other data types if needed.
+- The API runs on `localhost:3001` and is proxied via Vite in development.
+- Basic validation is client-side only. Add server-side validation for production.
+
+### Extensibility
+
+- **Add field types**: Extend `FieldType` in `types/user.ts` and handle new types in `UserForm.tsx`.
+- **Custom validators**: Use the `custom` property in `ValidationRule` for complex validation logic.
+- **Select fields**: Set `type: 'select'` and provide an `options` array.
+
+## Project Structure
+
+```
+src/
+├── api/
+│   └── userApi.ts          # API client functions
+├── components/
+│   ├── Layout.tsx          # App layout with header/footer
+│   ├── UserForm.tsx        # Schema-driven form component
+│   ├── UserList.tsx        # User table component
+│   ├── UserDialog.tsx      # Create/edit modal
+│   └── ConfirmDialog.tsx   # Delete confirmation modal
+├── config/
+│   └── formConfig.ts       # Field definitions (THE KEY FILE)
+├── hooks/
+│   └── useUsers.ts         # User state management hook
+├── types/
+│   └── user.ts             # TypeScript interfaces
+└── utils/
+    └── validations.ts      # Validation utilities
 ```
