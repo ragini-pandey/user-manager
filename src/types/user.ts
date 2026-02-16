@@ -1,34 +1,44 @@
 export interface User {
-  id: string;
+  id: number;
   firstName: string;
   lastName: string;
   phone: string;
   email: string;
-  [key: string]: unknown; // allows extensible fields
+  [key: string]: unknown;
 }
 
-export type FieldType = 'text' | 'email' | 'password' | 'tel' | 'textarea' | 'select';
+export type UserPayload = Omit<User, 'id'>;
+
+
+export type FieldType = 'text' | 'email' | 'tel' | 'date' | 'number' | 'textarea' | 'select';
+
 
 export interface ValidationRule {
-    required?: boolean;
-    minLength?: number;
-    maxLength?: number;
-    pattern?: RegExp;
+  required?: boolean;
+  pattern?: RegExp;
+  minLength?: number;
+  maxLength?: number;
+  custom?: (value: string) => string | null;
 }
 
-export interface FieldConfig{
-  type: FieldType;
+export interface FieldConfig {
   name: string;
-  validationRule: ValidationRule;
   label: string;
-  placeholder: string;
-  defaultValue: string;
-  options?: { label : string; value: string}[];
-  gridSize?: number;
-  errorMessages: {
+  type: FieldType;
+  placeholder?: string;
+  validation: ValidationRule;
+  errorMessages?: {
     required?: string;
     pattern?: string;
-    minLength?: number;
-    maxLength?: number;
-  }
+    minLength?: string;
+    maxLength?: string;
+  };
+  gridSize?: number;
+  options?: { label: string; value: string }[];
+  defaultValue?: string;
+}
+
+export interface ApiError {
+  message: string;
+  status?: number;
 }
