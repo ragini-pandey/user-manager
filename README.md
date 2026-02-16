@@ -141,4 +141,58 @@ src/
 │   └── user.ts             # TypeScript interfaces
 └── utils/
     └── validations.ts      # Validation utilities
+
+api/                          # Vercel serverless functions (production)
+├── users/
+│   ├── index.ts            # GET /api/users, POST /api/users
+│   └── [id].ts             # GET/PUT/DELETE /api/users/:id
 ```
+
+## Mock API Setup
+
+### Local Development (JSON Server)
+
+For local development, the app uses [JSON Server](https://github.com/typicode/json-server) as a mock REST API:
+
+- **Data file**: `db.json` (edit to seed/modify data)
+- **Port**: 3001
+- **Endpoints**: `http://localhost:3001/users`
+
+Vite proxies `/api/users` → `http://localhost:3001/users` automatically (configured in `vite.config.ts`).
+
+```bash
+# Start both frontend and mock API
+npm run start
+
+# Or run them separately
+npm run dev      # Frontend only
+npm run server   # JSON Server only
+```
+
+### Production (Vercel Serverless Functions)
+
+For production on Vercel, the app uses serverless API routes in the `/api` folder:
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/users` | GET | List all users |
+| `/api/users` | POST | Create a new user |
+| `/api/users/:id` | GET | Get user by ID |
+| `/api/users/:id` | PUT | Update user |
+| `/api/users/:id` | DELETE | Delete user |
+
+**Note**: Vercel serverless functions are stateless. Data is stored in-memory and will reset when:
+- The function goes cold (~5-15 minutes of inactivity)
+- A new deployment is made
+
+**⚠️ Data is NOT persistent**: The current serverless API stores data in-memory only.
+
+### Known Limitations / Where the API Will Fail
+
+| Scenario | What Happens | Why |
+|----------|--------------|-----|
+| **Delete/Update a user created earlier** | 404 Not Found | Data was lost when the serverless function went cold |
+| **Refresh page after adding users** | New users disappear | In-memory data resets on cold start |
+| **After redeployment** | All data resets to seed data | New deployment = fresh function instance |
+
+**This is expected behavior for a demo app without a database.** The pre-seeded users (Alice, Bob, Charlie) will always be available on fresh loads.
