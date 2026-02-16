@@ -1,12 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-
-let users = [
-  { id: 1, firstName: 'Alice', lastName: 'Johnson', phone: '+1-555-0101', email: 'alice.johnson@example.com' },
-  { id: 2, firstName: 'Bob', lastName: 'Smith', phone: '+1-555-0102', email: 'bob.smith@example.com' },
-  { id: 3, firstName: 'Charlie', lastName: 'Brown', phone: '+1-555-0103', email: 'charlie.brown@example.com' },
-];
-
-let nextId = 4;
+import { users, getNextId } from '../_data';
 
 export default function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -22,7 +15,7 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (req.method === 'POST') {
-    const newUser = { id: nextId++, ...req.body };
+    const newUser = { id: getNextId(), ...req.body };
     users.push(newUser);
     return res.status(201).json(newUser);
   }
